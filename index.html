@@ -1,559 +1,580 @@
-import React, { useState, useMemo, useEffect } from 'react';
-
-// --- ÍCONES INTERNOS ---
-const Icons = {
-  Package: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22v-9"/></svg>,
-  Snowflake: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></svg>,
-  Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
-  User: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
-  Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
-  CheckCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-12 12-4-4"/></svg>,
-  Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-  AlertCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
-  Briefcase: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
-  Eye: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
-  X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
-  Printer: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>,
-  FileText: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
-};
-
-// Dados completos importados
-const initialData = [
-  { id: 1, withdrawalDate: '', client: 'Não informado', employee: 'Gustavo Bonfim', bags: 1, packs: 2, returnDate: '2025-07-29', receiver: 'Paula Novais' },
-  { id: 2, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 3, packs: 11, returnDate: '2025-07-30', receiver: 'Paula Novais' },
-  { id: 3, withdrawalDate: '2025-07-30', client: 'INDUSTRIA E COMERCIO DE BEBIDAS FUNADA LTDA', employee: 'Bruno Veronez', bags: 1, packs: 0, returnDate: null, receiver: '' },
-  { id: 4, withdrawalDate: '2025-08-13', client: 'Daflora e Minalice', employee: 'Patricia Pinatti', bags: 1, packs: 6, returnDate: null, receiver: '' },
-  { id: 5, withdrawalDate: '2025-08-19', client: 'FUNADA', employee: 'Bruno Veronez', bags: 1, packs: 3, returnDate: '2025-08-20', receiver: 'Thamiris Souza' },
-  { id: 6, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 1, packs: 2, returnDate: '2025-09-30', receiver: 'Thamiris Souza' },
-  { id: 7, withdrawalDate: '2025-10-09', client: 'REFRIGERANTES ITAMONTE LTDA', employee: 'Gustavo Bonfim', bags: 1, packs: 5, returnDate: null, receiver: '' },
-  { id: 8, withdrawalDate: '2025-10-10', client: 'Não informado', employee: 'Pericles', bags: 1, packs: 2, returnDate: '2025-10-13', receiver: 'Paula Novais' },
-  { id: 9, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 1, packs: 0, returnDate: '2025-11-05', receiver: 'Thamiris Souza' },
-  { id: 10, withdrawalDate: '2025-11-19', client: 'Não informado', employee: 'Matheus', bags: 1, packs: 0, returnDate: null, receiver: '' },
-  { id: 11, withdrawalDate: '2025-11-19', client: 'Não informado', employee: 'Larissa', bags: 1, packs: 0, returnDate: null, receiver: '' }
-];
-
-export default function App() {
-  const [records, setRecords] = useState(() => {
-    try {
-      // Chave alterada para v2 para forçar o carregamento dos novos dados iniciais
-      const savedData = localStorage.getItem('thermalBagsData_v2');
-      return savedData ? JSON.parse(savedData) : initialData;
-    } catch (e) {
-      return initialData;
-    }
-  });
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  
-  // Estados para o modal de devolução (Baixa)
-  const [returnModalOpen, setReturnModalOpen] = useState(false);
-  const [recordToReturn, setRecordToReturn] = useState(null);
-  const [receiverName, setReceiverName] = useState('');
-  
-  const [formData, setFormData] = useState({
-    employee: '',
-    client: '',
-    bags: 1,
-    packs: 0,
-    withdrawalDate: new Date().toISOString().split('T')[0]
-  });
-
-  useEffect(() => {
-    // Chave alterada para v2
-    localStorage.setItem('thermalBagsData_v2', JSON.stringify(records));
-  }, [records]);
-
-  const stats = useMemo(() => {
-    const active = records.filter(r => !r.returnDate);
-    return {
-      totalBagsOut: active.reduce((acc, curr) => acc + Number(curr.bags), 0),
-      totalPacksOut: active.reduce((acc, curr) => acc + Number(curr.packs), 0),
-      pendingReturns: active.length,
-      totalHistory: records.length
-    };
-  }, [records]);
-
-  const filteredRecords = records.filter(record => 
-    record.employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.client.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Iniciar o processo de baixa (Abre o modal)
-  const initiateReturn = (record) => {
-    setRecordToReturn(record);
-    setReceiverName(''); // Limpa o nome anterior
-    setReturnModalOpen(true);
-  };
-
-  // Confirmar a baixa (Salva os dados)
-  const confirmReturn = (e) => {
-    e.preventDefault();
-    if (!recordToReturn) return;
-
-    const today = new Date().toISOString().split('T')[0];
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Bolsas Térmicas</title>
     
-    setRecords(records.map(record => 
-      record.id === recordToReturn.id 
-        ? { ...record, returnDate: today, receiver: receiverName } 
-        : record
-    ));
-
-    if (selectedRecord && selectedRecord.id === recordToReturn.id) {
-      setSelectedRecord(prev => ({ ...prev, returnDate: today, receiver: receiverName }));
-    }
-
-    setReturnModalOpen(false);
-    setRecordToReturn(null);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newRecord = {
-      id: Date.now(),
-      ...formData,
-      returnDate: null,
-      receiver: ''
-    };
-    setRecords([newRecord, ...records]);
-    setShowForm(false);
-    setFormData({
-      employee: '',
-      client: '',
-      bags: 1,
-      packs: 0,
-      withdrawalDate: new Date().toISOString().split('T')[0]
-    });
-  };
-
-  const StatCard = ({ title, value, icon: Icon, colorClass, subText }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
-      <div>
-        <p className="text-slate-500 text-sm font-medium mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
-        {subText && <p className="text-xs text-slate-400 mt-1">{subText}</p>}
-      </div>
-      <div className={`p-3 rounded-lg ${colorClass}`}>
-        <Icon />
-      </div>
-    </div>
-  );
-
-  // Modal de Confirmação de Baixa
-  const ReturnModal = () => {
-    if (!returnModalOpen || !recordToReturn) return null;
-
-    return (
-      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800">Confirmar Devolução</h3>
-            <button onClick={() => setReturnModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-              <Icons.X />
-            </button>
-          </div>
-          
-          <form onSubmit={confirmReturn} className="p-6">
-            <div className="mb-4">
-              <p className="text-sm text-slate-600 mb-4">
-                Você está dando baixa nos itens de <span className="font-bold text-slate-800">{recordToReturn.employee}</span>.
-              </p>
-              
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-sm">
-                <span className="block font-semibold text-blue-800">Itens a devolver:</span>
-                <span className="text-blue-700">{recordToReturn.bags} Bolsa(s), {recordToReturn.packs} Placa(s)</span>
-              </div>
-
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Quem recebeu a devolução? <span className="text-red-500">*</span>
-              </label>
-              <input
-                required
-                autoFocus
-                type="text"
-                placeholder="Ex: Paula Novais"
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                value={receiverName}
-                onChange={(e) => setReceiverName(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                type="button"
-                onClick={() => setReturnModalOpen(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium text-sm transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-2"
-              >
-                <Icons.CheckCircle />
-                Confirmar Baixa
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
-
-  // Modal de Visualização (Comprovante)
-  const PreviewModal = ({ record, onClose }) => {
-    if (!record) return null;
-    const isReturned = !!record.returnDate;
+    <!-- Carregando React e ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    const safeFormatDate = (dateStr) => {
-      if (!dateStr) return '-';
-      try {
-        const [year, month, day] = dateStr.split('-');
-        return `${day}/${month}/${year}`;
-      } catch (e) {
-        return dateStr;
-      }
-    };
+    <!-- Carregando Babel (para traduzir o código React para o navegador) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Carregando Tailwind CSS (para o estilo/beleza) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
 
-    const formattedDate = safeFormatDate(record.withdrawalDate);
-    const formattedReturn = safeFormatDate(record.returnDate);
+    <!-- Aqui começa o nosso código React -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
-    return (
-      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <div className="text-blue-600"><Icons.FileText /></div>
-              <h3 className="font-bold text-slate-800">Comprovante de Movimentação</h3>
-            </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
-              <Icons.X />
-            </button>
-          </div>
+        // --- ÍCONES INTERNOS ---
+        const Icons = {
+            Package: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22v-9"/></svg>,
+            Snowflake: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></svg>,
+            Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+            User: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            CheckCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-12 12-4-4"/></svg>,
+            Clock: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            AlertCircle: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
+            Briefcase: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>,
+            Eye: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            X: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            Printer: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>,
+            FileText: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+        };
 
-          <div className="p-6 space-y-6">
-            <div className="flex justify-center mb-6">
-              <span className={`px-4 py-1 rounded-full text-sm font-bold border-2 uppercase tracking-wide ${
-                isReturned 
-                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
-                  : 'bg-amber-50 text-amber-600 border-amber-200'
-              }`}>
-                {isReturned ? 'DEVOLVIDO / FINALIZADO' : 'EM ABERTO / PENDENTE'}
-              </span>
-            </div>
+        // Dados completos importados
+        const initialData = [
+            { id: 1, withdrawalDate: '', client: 'Não informado', employee: 'Gustavo Bonfim', bags: 1, packs: 2, returnDate: '2025-07-29', receiver: 'Paula Novais' },
+            { id: 2, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 3, packs: 11, returnDate: '2025-07-30', receiver: 'Paula Novais' },
+            { id: 3, withdrawalDate: '2025-07-30', client: 'INDUSTRIA E COMERCIO DE BEBIDAS FUNADA LTDA', employee: 'Bruno Veronez', bags: 1, packs: 0, returnDate: null, receiver: '' },
+            { id: 4, withdrawalDate: '2025-08-13', client: 'Daflora e Minalice', employee: 'Patricia Pinatti', bags: 1, packs: 6, returnDate: null, receiver: '' },
+            { id: 5, withdrawalDate: '2025-08-19', client: 'FUNADA', employee: 'Bruno Veronez', bags: 1, packs: 3, returnDate: '2025-08-20', receiver: 'Thamiris Souza' },
+            { id: 6, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 1, packs: 2, returnDate: '2025-09-30', receiver: 'Thamiris Souza' },
+            { id: 7, withdrawalDate: '2025-10-09', client: 'REFRIGERANTES ITAMONTE LTDA', employee: 'Gustavo Bonfim', bags: 1, packs: 5, returnDate: null, receiver: '' },
+            { id: 8, withdrawalDate: '2025-10-10', client: 'Não informado', employee: 'Pericles', bags: 1, packs: 2, returnDate: '2025-10-13', receiver: 'Paula Novais' },
+            { id: 9, withdrawalDate: '', client: 'Não informado', employee: 'Bruno Veronez', bags: 1, packs: 0, returnDate: '2025-11-05', receiver: 'Thamiris Souza' },
+            { id: 10, withdrawalDate: '2025-11-19', client: 'Não informado', employee: 'Matheus', bags: 1, packs: 0, returnDate: null, receiver: '' },
+            { id: 11, withdrawalDate: '2025-11-19', client: 'Não informado', employee: 'Larissa', bags: 1, packs: 0, returnDate: null, receiver: '' }
+        ];
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-400 uppercase">Colaborador</label>
-                <p className="font-medium text-slate-800 text-lg">{record.employee}</p>
-              </div>
-              <div className="space-y-1 text-right">
-                <label className="text-xs font-semibold text-slate-400 uppercase">Data Retirada</label>
-                <p className="font-medium text-slate-800 text-lg">{formattedDate}</p>
-              </div>
-            </div>
+        function App() {
+            const [records, setRecords] = useState(() => {
+                try {
+                    const savedData = localStorage.getItem('thermalBagsData_v2');
+                    return savedData ? JSON.parse(savedData) : initialData;
+                } catch (e) {
+                    return initialData;
+                }
+            });
 
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-              <label className="text-xs font-semibold text-slate-400 uppercase block mb-2">Cliente / Destino</label>
-              <p className="text-slate-700 font-medium">{record.client}</p>
-            </div>
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showForm, setShowForm] = useState(false);
+            const [selectedRecord, setSelectedRecord] = useState(null);
+            const [returnModalOpen, setReturnModalOpen] = useState(false);
+            const [recordToReturn, setRecordToReturn] = useState(null);
+            const [receiverName, setReceiverName] = useState('');
+            
+            const [formData, setFormData] = useState({
+                employee: '',
+                client: '',
+                bags: 1,
+                packs: 0,
+                withdrawalDate: new Date().toISOString().split('T')[0]
+            });
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex flex-col items-center justify-center text-center">
-                <div className="text-blue-500 mb-2"><Icons.Briefcase /></div>
-                <span className="text-2xl font-bold text-blue-700">{record.bags}</span>
-                <span className="text-xs text-blue-600 uppercase font-semibold">Bolsas</span>
-              </div>
-              <div className="bg-cyan-50 p-4 rounded-lg border border-cyan-100 flex flex-col items-center justify-center text-center">
-                <div className="text-cyan-500 mb-2"><Icons.Snowflake /></div>
-                <span className="text-2xl font-bold text-cyan-700">{record.packs}</span>
-                <span className="text-xs text-cyan-600 uppercase font-semibold">Placas de Gelo</span>
-              </div>
-            </div>
+            useEffect(() => {
+                localStorage.setItem('thermalBagsData_v2', JSON.stringify(records));
+            }, [records]);
 
-            {isReturned && (
-              <div className="border-t border-dashed border-slate-300 pt-4 mt-4">
-                <div className="flex justify-between items-center text-sm">
-                  <div>
-                    <span className="text-slate-400 block text-xs uppercase">Data Devolução</span>
-                    <span className="text-emerald-700 font-bold">{formattedReturn}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-400 block text-xs uppercase">Recebido Por</span>
-                    <span className="text-slate-700 font-medium">{record.receiver}</span>
-                  </div>
+            const stats = useMemo(() => {
+                const active = records.filter(r => !r.returnDate);
+                return {
+                    totalBagsOut: active.reduce((acc, curr) => acc + Number(curr.bags), 0),
+                    totalPacksOut: active.reduce((acc, curr) => acc + Number(curr.packs), 0),
+                    pendingReturns: active.length,
+                    totalHistory: records.length
+                };
+            }, [records]);
+
+            const filteredRecords = records.filter(record => 
+                record.employee.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                record.client.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const initiateReturn = (record) => {
+                setRecordToReturn(record);
+                setReceiverName('');
+                setReturnModalOpen(true);
+            };
+
+            const confirmReturn = (e) => {
+                e.preventDefault();
+                if (!recordToReturn) return;
+
+                const today = new Date().toISOString().split('T')[0];
+                
+                setRecords(records.map(record => 
+                    record.id === recordToReturn.id 
+                        ? { ...record, returnDate: today, receiver: receiverName } 
+                        : record
+                ));
+
+                if (selectedRecord && selectedRecord.id === recordToReturn.id) {
+                    setSelectedRecord(prev => ({ ...prev, returnDate: today, receiver: receiverName }));
+                }
+
+                setReturnModalOpen(false);
+                setRecordToReturn(null);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const newRecord = {
+                    id: Date.now(),
+                    ...formData,
+                    returnDate: null,
+                    receiver: ''
+                };
+                setRecords([newRecord, ...records]);
+                setShowForm(false);
+                setFormData({
+                    employee: '',
+                    client: '',
+                    bags: 1,
+                    packs: 0,
+                    withdrawalDate: new Date().toISOString().split('T')[0]
+                });
+            };
+
+            const StatCard = ({ title, value, icon: Icon, colorClass, subText }) => (
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+                    <div>
+                        <p className="text-slate-500 text-sm font-medium mb-1">{title}</p>
+                        <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+                        {subText && <p className="text-xs text-slate-400 mt-1">{subText}</p>}
+                    </div>
+                    <div className={`p-3 rounded-lg ${colorClass}`}>
+                        <Icon />
+                    </div>
                 </div>
-              </div>
-            )}
-          </div>
+            );
 
-          <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
-             <button 
-               className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium text-sm"
-               onClick={() => window.print()}
-             >
-               <Icons.Printer />
-               Imprimir
-             </button>
-             <button 
-               onClick={onClose}
-               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
-             >
-               Fechar Visualização
-             </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
+            const ReturnModal = () => {
+                if (!returnModalOpen || !recordToReturn) return null;
 
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-blue-600 p-2 rounded-lg text-white">
-              <Icons.Package />
-            </div>
-            <h1 className="text-xl font-bold text-slate-800">Controle de Bolsas Térmicas</h1>
-          </div>
-          <div className="text-sm text-slate-500">
-            Responsável: <span className="font-semibold text-slate-700">Paula Novais</span>
-          </div>
-        </div>
-      </header>
+                return (
+                    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                                <h3 className="font-bold text-slate-800">Confirmar Devolução</h3>
+                                <button onClick={() => setReturnModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <Icons.X />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={confirmReturn} className="p-6">
+                                <div className="mb-4">
+                                    <p className="text-sm text-slate-600 mb-4">
+                                        Você está dando baixa nos itens de <span className="font-bold text-slate-800">{recordToReturn.employee}</span>.
+                                    </p>
+                                    
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 text-sm">
+                                        <span className="block font-semibold text-blue-800">Itens a devolver:</span>
+                                        <span className="text-blue-700">{recordToReturn.bags} Bolsa(s), {recordToReturn.packs} Placa(s)</span>
+                                    </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <StatCard 
-            title="Bolsas em Uso" 
-            value={stats.totalBagsOut} 
-            icon={Icons.Briefcase} 
-            colorClass="bg-blue-100 text-blue-600"
-            subText="Unidades com vendedores"
-          />
-          <StatCard 
-            title="Placas de Gelo" 
-            value={stats.totalPacksOut} 
-            icon={Icons.Snowflake} 
-            colorClass="bg-cyan-100 text-cyan-600"
-            subText="Unidades com vendedores" 
-          />
-          <StatCard 
-            title="Pendências" 
-            value={stats.pendingReturns} 
-            icon={Icons.AlertCircle} 
-            colorClass="bg-amber-100 text-amber-600"
-            subText="Aguardando devolução"
-          />
-          <StatCard 
-            title="Total Histórico" 
-            value={stats.totalHistory} 
-            icon={Icons.CheckCircle} 
-            colorClass="bg-emerald-100 text-emerald-600"
-            subText="Registros totais"
-          />
-        </div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Quem recebeu a devolução? <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        required
+                                        autoFocus
+                                        type="text"
+                                        placeholder="Ex: Paula Novais"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={receiverName}
+                                        onChange={(e) => setReceiverName(e.target.value)}
+                                    />
+                                </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          <div className="relative w-full md:w-96">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Icons.Search />
-            </div>
-            <input 
-              type="text"
-              placeholder="Buscar por nome ou cliente..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button 
-            onClick={() => setShowForm(!showForm)}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors shadow-sm"
-          >
-            {showForm ? 'Cancelar' : <><Icons.Plus /> Nova Retirada</>}
-          </button>
-        </div>
-
-        {showForm && (
-          <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-slate-800">Registrar Nova Saída</h2>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Data Retirada</label>
-                <input 
-                  required
-                  type="date" 
-                  className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={formData.withdrawalDate}
-                  onChange={e => setFormData({...formData, withdrawalDate: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1 lg:col-span-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Colaborador</label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder="Nome do vendedor"
-                  className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={formData.employee}
-                  onChange={e => setFormData({...formData, employee: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1 lg:col-span-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Cliente</label>
-                <input 
-                  required
-                  type="text" 
-                  placeholder="Cliente destino"
-                  className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={formData.client}
-                  onChange={e => setFormData({...formData, client: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2 lg:col-span-1">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Bolsas</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formData.bags}
-                    onChange={e => setFormData({...formData, bags: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase">Placas</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={formData.packs}
-                    onChange={e => setFormData({...formData, packs: e.target.value})}
-                  />
-                </div>
-              </div>
-              <div className="flex items-end">
-                <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg font-medium transition-colors">
-                  Salvar Registro
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Data Retirada</th>
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador / Cliente</th>
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Itens</th>
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Devolução</th>
-                  <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRecords.map((record) => {
-                  const isReturned = !!record.returnDate;
-                  const formattedDate = record.withdrawalDate ? record.withdrawalDate.split('-').reverse().join('/') : '-';
-                  const formattedReturn = record.returnDate ? record.returnDate.split('-').reverse().join('/') : '-';
-
-                  return (
-                    <tr key={record.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          isReturned 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}>
-                          {isReturned ? 'Devolvido' : 'Pendente'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-600 font-medium whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className="text-slate-400"><Icons.Calendar /></div>
-                          {formattedDate}
+                                <div className="flex justify-end gap-2 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setReturnModalOpen(false)}
+                                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium text-sm transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm flex items-center gap-2"
+                                    >
+                                        <Icons.CheckCircle />
+                                        Confirmar Baixa
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-medium text-slate-800 flex items-center gap-2">
-                          <div className="text-slate-400"><Icons.User /></div>
-                          {record.employee}
+                    </div>
+                );
+            };
+
+            const PreviewModal = ({ record, onClose }) => {
+                if (!record) return null;
+                const isReturned = !!record.returnDate;
+                
+                const safeFormatDate = (dateStr) => {
+                    if (!dateStr) return '-';
+                    try {
+                        const [year, month, day] = dateStr.split('-');
+                        return `${day}/${month}/${year}`;
+                    } catch (e) {
+                        return dateStr;
+                    }
+                };
+
+                const formattedDate = safeFormatDate(record.withdrawalDate);
+                const formattedReturn = safeFormatDate(record.returnDate);
+
+                return (
+                    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <div className="text-blue-600"><Icons.FileText /></div>
+                                    <h3 className="font-bold text-slate-800">Comprovante de Movimentação</h3>
+                                </div>
+                                <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                    <Icons.X />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                <div className="flex justify-center mb-6">
+                                    <span className={`px-4 py-1 rounded-full text-sm font-bold border-2 uppercase tracking-wide ${
+                                        isReturned 
+                                            ? 'bg-emerald-50 text-emerald-600 border-emerald-200' 
+                                            : 'bg-amber-50 text-amber-600 border-amber-200'
+                                    }`}>
+                                        {isReturned ? 'DEVOLVIDO / FINALIZADO' : 'EM ABERTO / PENDENTE'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-semibold text-slate-400 uppercase">Colaborador</label>
+                                        <p className="font-medium text-slate-800 text-lg">{record.employee}</p>
+                                    </div>
+                                    <div className="space-y-1 text-right">
+                                        <label className="text-xs font-semibold text-slate-400 uppercase">Data Retirada</label>
+                                        <p className="font-medium text-slate-800 text-lg">{formattedDate}</p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                    <label className="text-xs font-semibold text-slate-400 uppercase block mb-2">Cliente / Destino</label>
+                                    <p className="text-slate-700 font-medium">{record.client}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex flex-col items-center justify-center text-center">
+                                        <div className="text-blue-500 mb-2"><Icons.Briefcase /></div>
+                                        <span className="text-2xl font-bold text-blue-700">{record.bags}</span>
+                                        <span className="text-xs text-blue-600 uppercase font-semibold">Bolsas</span>
+                                    </div>
+                                    <div className="bg-cyan-50 p-4 rounded-lg border border-cyan-100 flex flex-col items-center justify-center text-center">
+                                        <div className="text-cyan-500 mb-2"><Icons.Snowflake /></div>
+                                        <span className="text-2xl font-bold text-cyan-700">{record.packs}</span>
+                                        <span className="text-xs text-cyan-600 uppercase font-semibold">Placas de Gelo</span>
+                                    </div>
+                                </div>
+
+                                {isReturned && (
+                                    <div className="border-t border-dashed border-slate-300 pt-4 mt-4">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <div>
+                                                <span className="text-slate-400 block text-xs uppercase">Data Devolução</span>
+                                                <span className="text-emerald-700 font-bold">{formattedReturn}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-slate-400 block text-xs uppercase">Recebido Por</span>
+                                                <span className="text-slate-700 font-medium">{record.receiver}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+                                <button 
+                                    className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium text-sm"
+                                    onClick={() => window.print()}
+                                >
+                                    <Icons.Printer />
+                                    Imprimir
+                                </button>
+                                <button 
+                                    onClick={onClose}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
+                                >
+                                    Fechar Visualização
+                                </button>
+                            </div>
                         </div>
-                        <div className="text-sm text-slate-500 mt-1 pl-6">
-                          {record.client}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-blue-600 p-2 rounded-lg text-white">
+                                    <Icons.Package />
+                                </div>
+                                <h1 className="text-xl font-bold text-slate-800">Controle de Bolsas Térmicas</h1>
+                            </div>
+                            <div className="text-sm text-slate-500">
+                                Responsável: <span className="font-semibold text-slate-700">Paula Novais</span>
+                            </div>
                         </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="flex flex-col gap-1 items-center">
-                          <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 w-full whitespace-nowrap">
-                            {record.bags} Bolsa(s)
-                          </span>
-                          {Number(record.packs) > 0 && (
-                            <span className="text-xs font-medium bg-cyan-50 text-cyan-700 px-2 py-1 rounded border border-cyan-100 w-full whitespace-nowrap">
-                              {record.packs} Placa(s)
-                            </span>
-                          )}
+                    </header>
+
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <StatCard 
+                                title="Bolsas em Uso" 
+                                value={stats.totalBagsOut} 
+                                icon={Icons.Briefcase} 
+                                colorClass="bg-blue-100 text-blue-600"
+                                subText="Unidades com vendedores"
+                            />
+                            <StatCard 
+                                title="Placas de Gelo" 
+                                value={stats.totalPacksOut} 
+                                icon={Icons.Snowflake} 
+                                colorClass="bg-cyan-100 text-cyan-600"
+                                subText="Unidades com vendedores" 
+                            />
+                            <StatCard 
+                                title="Pendências" 
+                                value={stats.pendingReturns} 
+                                icon={Icons.AlertCircle} 
+                                colorClass="bg-amber-100 text-amber-600"
+                                subText="Aguardando devolução"
+                            />
+                            <StatCard 
+                                title="Total Histórico" 
+                                value={stats.totalHistory} 
+                                icon={Icons.CheckCircle} 
+                                colorClass="bg-emerald-100 text-emerald-600"
+                                subText="Registros totais"
+                            />
                         </div>
-                      </td>
-                      <td className="p-4">
-                        {isReturned ? (
-                          <div className="text-sm text-slate-600">
-                            <div className="font-medium text-emerald-700">{formattedReturn}</div>
-                            <div className="text-xs text-slate-400">Rec: {record.receiver}</div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-amber-600 text-sm">
-                            <Icons.Clock />
-                            <span>Aguardando</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => setSelectedRecord(record)}
-                            className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
-                            title="Visualizar Comprovante"
-                          >
-                            <Icons.Eye />
-                          </button>
-                           
-                          {!isReturned && (
+
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                            <div className="relative w-full md:w-96">
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                    <Icons.Search />
+                                </div>
+                                <input 
+                                    type="text"
+                                    placeholder="Buscar por nome ou cliente..."
+                                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
                             <button 
-                              onClick={() => initiateReturn(record)}
-                              className="bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 text-slate-600 text-sm px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-2"
-                              title="Marcar como devolvido"
+                                onClick={() => setShowForm(!showForm)}
+                                className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors shadow-sm"
                             >
-                              <Icons.CheckCircle />
-                              Dar Baixa
+                                {showForm ? 'Cancelar' : <><Icons.Plus /> Nova Retirada</>}
                             </button>
-                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-             
-            {filteredRecords.length === 0 && (
-              <div className="p-8 text-center text-slate-500">
-                Nenhum registro encontrado para sua busca.
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
 
-      <ReturnModal />
-      <PreviewModal record={selectedRecord} onClose={() => setSelectedRecord(null)} />
-    </div>
-  );
-}
+                        {showForm && (
+                            <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100 mb-6">
+                                <h2 className="text-lg font-semibold mb-4 text-slate-800">Registrar Nova Saída</h2>
+                                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase">Data Retirada</label>
+                                        <input 
+                                            required
+                                            type="date" 
+                                            className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.withdrawalDate}
+                                            onChange={e => setFormData({...formData, withdrawalDate: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-1 lg:col-span-1">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase">Colaborador</label>
+                                        <input 
+                                            required
+                                            type="text" 
+                                            placeholder="Nome do vendedor"
+                                            className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.employee}
+                                            onChange={e => setFormData({...formData, employee: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="space-y-1 lg:col-span-1">
+                                        <label className="text-xs font-semibold text-slate-500 uppercase">Cliente</label>
+                                        <input 
+                                            required
+                                            type="text" 
+                                            placeholder="Cliente destino"
+                                            className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={formData.client}
+                                            onChange={e => setFormData({...formData, client: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 lg:col-span-1">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase">Bolsas</label>
+                                            <input 
+                                                type="number" 
+                                                min="1"
+                                                className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                value={formData.bags}
+                                                onChange={e => setFormData({...formData, bags: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-semibold text-slate-500 uppercase">Placas</label>
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                                value={formData.packs}
+                                                onChange={e => setFormData({...formData, packs: e.target.value})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex items-end">
+                                        <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg font-medium transition-colors">
+                                            Salvar Registro
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Data Retirada</th>
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador / Cliente</th>
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Itens</th>
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Devolução</th>
+                                            <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {filteredRecords.map((record) => {
+                                            const isReturned = !!record.returnDate;
+                                            const formattedDate = record.withdrawalDate ? record.withdrawalDate.split('-').reverse().join('/') : '-';
+                                            const formattedReturn = record.returnDate ? record.returnDate.split('-').reverse().join('/') : '-';
+
+                                            return (
+                                                <tr key={record.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-4">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                                                            isReturned 
+                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                        }`}>
+                                                            {isReturned ? 'Devolvido' : 'Pendente'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-slate-600 font-medium whitespace-nowrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="text-slate-400"><Icons.Calendar /></div>
+                                                            {formattedDate}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="font-medium text-slate-800 flex items-center gap-2">
+                                                            <div className="text-slate-400"><Icons.User /></div>
+                                                            {record.employee}
+                                                        </div>
+                                                        <div className="text-sm text-slate-500 mt-1 pl-6">
+                                                            {record.client}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4 text-center">
+                                                        <div className="flex flex-col gap-1 items-center">
+                                                            <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100 w-full whitespace-nowrap">
+                                                                {record.bags} Bolsa(s)
+                                                            </span>
+                                                            {Number(record.packs) > 0 && (
+                                                                <span className="text-xs font-medium bg-cyan-50 text-cyan-700 px-2 py-1 rounded border border-cyan-100 w-full whitespace-nowrap">
+                                                                    {record.packs} Placa(s)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {isReturned ? (
+                                                            <div className="text-sm text-slate-600">
+                                                                <div className="font-medium text-emerald-700">{formattedReturn}</div>
+                                                                <div className="text-xs text-slate-400">Rec: {record.receiver}</div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1 text-amber-600 text-sm">
+                                                                <Icons.Clock />
+                                                                <span>Aguardando</span>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button 
+                                                                onClick={() => setSelectedRecord(record)}
+                                                                className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                                                                title="Visualizar Comprovante"
+                                                            >
+                                                                <Icons.Eye />
+                                                            </button>
+                                                            
+                                                            {!isReturned && (
+                                                                <button 
+                                                                    onClick={() => initiateReturn(record)}
+                                                                    className="bg-white border border-slate-200 hover:border-emerald-500 hover:text-emerald-600 text-slate-600 text-sm px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center gap-2"
+                                                                    title="Marcar como devolvido"
+                                                                >
+                                                                    <Icons.CheckCircle />
+                                                                    Dar Baixa
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                
+                                {filteredRecords.length === 0 && (
+                                    <div className="p-8 text-center text-slate-500">
+                                        Nenhum registro encontrado para sua busca.
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+
+                    <ReturnModal />
+                    <PreviewModal record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+                </div>
+            );
+        }
+
+        // Renderizar o App no elemento com id "root"
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
